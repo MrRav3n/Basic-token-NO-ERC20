@@ -1,6 +1,10 @@
-const Token = artifacts.require("Token")
+const Token = artifacts.require("Token");
 
-contract('Token', ([deployer, account]) => {
+require('chai')
+.use(require('chai-as-promised'))
+.should()
+
+contract('Token', ([deployer, account, account2]) => {
     let token;
     before(async() => {
         token = await Token.deployed();
@@ -14,11 +18,19 @@ contract('Token', ([deployer, account]) => {
         })
     })
     describe('other tests', async() => {
-        it('should send tokens' async() => {
-
+        it('should send tokens', async() => {
+            const sendTokens = await token.sendTokens(10000, account, {from: deployer});
+            const balanceSender = await token.balances(deployer);
+            const balanceAccount = await token.balances(account);
+            assert.equal(balanceSender.toString(), 10000000000000000000-10000);
+            assert.equal(balanceAccount.toString(), 10000);
+            await token.sendTokens(10001, deployer, {from: account}).should.be.rejected;
         })
-        it('should buy tokens' async() => {
-
+        it('should buy tokens', async() => {
+            const buyTokens = await token.buyTokens({from: account2, value: 100});
+            const balanceAccount2 = await token.balances(account2);
+            assert.equal(balanceAccount2.toString(), 100)
+            await token.buyTokens({from: account2, value: 10000000000000000000000}).should.be.rejected;
         })
     })
 })
